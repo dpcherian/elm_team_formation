@@ -1,7 +1,7 @@
 #!/usr/bin/env python
 # coding: utf-8
 
-# In[ ]:
+# In[1]:
 
 
 import numpy as np
@@ -16,25 +16,25 @@ import tkinter as tk
 
 # # Common Functions for All 
 
-# In[ ]:
+# In[2]:
 
 
-def write_csv(names,groups,output_file):
+def write_csv(names,groups,input_file, output_file):
     import csv
     import datetime
     
     print("Creating output CSV.")
-    
-    data = pd.read_csv("Biased_Data.csv")
-    names = data["First Name"].values
-    preferred_groupmate = data["Preferred Team Member (Paired)"].fillna('').values        
+    data = pd.read_csv(input_file)
+    #data = pd.read_csv("Biased_Data.csv")
+    #names = data["First Name"].values
+    #preferred_groupmate = data["Preferred Team Member (Paired)"].fillna('').values        
 
-    d1 = data["Project Preference 1"].values
-    d2 = data["Project Preference 2"].values
-    d3 = data["Project Preference 3"].values
+#     d1 = data["Project Preference 1"].values
+#     d2 = data["Project Preference 2"].values
+#     d3 = data["Project Preference 3"].values
 
-    d4 = data["Project Preference 4"].values
-    d5 = data["Project Preference 5"].values
+#     d4 = data["Project Preference 4"].values
+#     d5 = data["Project Preference 5"].values
     
     
     
@@ -105,7 +105,7 @@ def happiness(group,names,pair_rating):  # group is a "group" [name1, name2]
 
 # # Code to create Quartets
 
-# In[ ]:
+# In[3]:
 
 
 def pair_groupmates(names,preferred_groupmate,constraints):
@@ -162,7 +162,7 @@ def pair_groupmates(names,preferred_groupmate,constraints):
     return new_names, new_constraints, groups, group_constraints
 
 
-# In[ ]:
+# In[4]:
 
 
 def pair_remaining(names,constraints,groups,group_constraints):
@@ -243,7 +243,7 @@ def pair_remaining(names,constraints,groups,group_constraints):
     return groups, group_constraints
 
 
-# In[ ]:
+# In[5]:
 
 
 def groups_pairs(groups,group_constraints):
@@ -366,7 +366,7 @@ def groups_pairs(groups,group_constraints):
 
 # # Code to create Groups of Indeterminate Sizes
 
-# In[ ]:
+# In[6]:
 
 
 def create_indeterminate_groups(new_names, new_d1, new_d2, new_d3, new_d4, new_d5):
@@ -451,10 +451,10 @@ def create_indeterminate_groups(new_names, new_d1, new_d2, new_d3, new_d4, new_d
     return new_names,new_d1,new_d2,new_d3,new_d4,new_d5,max_val
 
 
-# In[ ]:
+# In[7]:
 
 
-def run_groups_of_four(names,preferred_groupmate,constraints,output_filename):
+def run_groups_of_four(names,preferred_groupmate,constraints,input_filename, output_filename):
     
     # Make groups out of the team member preferences
     new_names, new_constraints, groups, group_constraints = pair_groupmates(names,preferred_groupmate,constraints)
@@ -466,22 +466,22 @@ def run_groups_of_four(names,preferred_groupmate,constraints,output_filename):
     quartets, quartet_constraints = groups_pairs(groups,group_constraints)
 
     # Write resulting groups to a .csv file
-    write_csv(names, quartets, output_filename)
+    write_csv(names, quartets, input_filename, output_filename)
 
 
-def run_groups_of_two(names,preferred_groupmate,constraints,output_filename):
+def run_groups_of_two(names,preferred_groupmate,constraints,input_filename,output_filename):
     
     # Make groups out of the team member preferences
     new_names, new_constraints, groups, group_constraints = pair_groupmates(names,preferred_groupmate,constraints)
-    print(groups)
+    
     # Assign the remaining students to groups based on constraints (project preferences etc.)
     groups, group_constraints = pair_remaining(new_names,new_constraints,groups,group_constraints)
 
     # Write resulting groups to a .csv file
-    write_csv(names, groups, output_filename)
+    write_csv(names, groups, input_filename, output_filename)
     
 
-def run_indeterminate_groups(names,preferred_groupmate,constraints,max_groups,output_filename):
+def run_indeterminate_groups(names,preferred_groupmate,constraints,max_groups,input_filename,output_filename):
     
     ## This part of the code assumes both preferred teammates have same preferences.
     
@@ -529,10 +529,10 @@ def run_indeterminate_groups(names,preferred_groupmate,constraints,max_groups,ou
         members = group.split("-")
         groups.append(members)
     
-    write_csv(names,groups,output_filename)
+    write_csv(names,groups,input_filename,output_filename)
 
 
-# In[16]:
+# In[8]:
 
 
 from tkinter import *
@@ -549,16 +549,23 @@ def browseFiles():
                                                        ("all files", 
                                                         "*.*"))) 
     # Change label contents 
-    entryText.set(filename) 
+    entryText.set(filename)
+    updateLists(filename)
        
 
 
 def get_input():
     
     try:
-        data = pd.read_csv(fileName.get())
-        names = data["First Name"].values
-        preferred_groupmate = data["Preferred Team Member (Paired)"].fillna('').values        
+        
+        input_filename = fileName.get()                # Get the name of the input file
+        
+        #uid = "First Name"                             # Get the UID string title
+        #ptm = "Preferred Team Member (Paired)"         # Get the Preferred Team-mate column title
+        
+        data = pd.read_csv(input_filename)
+        names = data[uid_field.get()].values
+        preferred_groupmate = data[ptm_field.get()].fillna('').values        
         
         d_array = [c1.get(),c2.get(),c3.get(),c4.get(),c5.get()]
         
@@ -571,12 +578,12 @@ def get_input():
         constraints = np.array(constraints)
         
         
-        d1 = data["Project Preference 1"].values
-        d2 = data["Project Preference 2"].values
-        d3 = data["Project Preference 3"].values
+#         d1 = data["Project Preference 1"].values
+#         d2 = data["Project Preference 2"].values
+#         d3 = data["Project Preference 3"].values
 
-        d4 = data["Project Preference 4"].values
-        d5 = data["Project Preference 5"].values
+#         d4 = data["Project Preference 4"].values
+#         d5 = data["Project Preference 5"].values
         
         
         button = v.get()
@@ -589,12 +596,12 @@ def get_input():
             if(len(names)%4!=0):
                 messagebox.showerror("Work in progress!","Currently this only works when total number of students is a multiple of 4. Edit your input file.",detail="Hopefully should be done in a couple of days.")
             else:
-                run_groups_of_four(names,preferred_groupmate,constraints,output_filename)
+                run_groups_of_four(names,preferred_groupmate,constraints,input_filename,output_filename)
         elif button == 2:
             if(len(names)%2!=0):
                 messagebox.showerror("Work in progress!","Currently this only works when total number of students is an even number. Edit your input file.",detail="Hopefully should be done in a couple of days.")
             else:
-                run_groups_of_two(names,preferred_groupmate,constraints,output_filename)
+                run_groups_of_two(names,preferred_groupmate,constraints,input_filename,output_filename)
         elif button == 3:
             #run_beta_groups_of_four()
             messagebox.showerror("Work in progress!","I'm working on how to do this.",detail="Hopefully should be done in a couple of days.")
@@ -602,7 +609,7 @@ def get_input():
             if(len(constraints)!=5):
                 messagebox.showerror("Work in progress!","Currently all five preferences are needed for groups of indeterminate sizes.",detail="Hopefully should be done in a couple of days.")
             else:
-                run_indeterminate_groups(names,preferred_groupmate,constraints,max_groups,output_filename)
+                run_indeterminate_groups(names,preferred_groupmate,constraints,max_groups,input_filename,output_filename)
         
     except Exception as e:
         messagebox.showerror("Oh No!",e,detail=traceback.format_exc())
@@ -621,7 +628,6 @@ def get_input():
 
 root = Tk()
 
-#root.configure(bg='green')
 root.title("ELM Team Formation Tool")
 
 f1 = Frame(root, relief=GROOVE, width=50,height=50,borderwidth=0)
@@ -634,7 +640,7 @@ label1.pack(pady=5)
 label1.config(justify = CENTER)
 
 
-entryText = StringVar(value='Biased_Data.csv')
+entryText = StringVar(value='Final_Sample_Data.csv')
 fileName = Entry(f1, width = 40,textvariable=entryText)
 fileName.pack(side=LEFT,pady=10)
 
@@ -687,46 +693,102 @@ max_groups_entry.pack(anchor=W,side=RIGHT,padx=10)
 
 ###################################################################
 
+def updateLists(filename):
+    
+    data = pd.read_csv(filename)
+    listvalues = list(data.columns)
+
+    uid_field['values'] = listvalues
+    ptm_field['values'] = listvalues
+    c1['values'] = listvalues
+    c2['values'] = listvalues
+    c3['values'] = listvalues
+    c4['values'] = listvalues
+    c5['values'] = listvalues
+
+## Make sure the right dropbox menus show #########
+
+        
+
+###################################################
+
+input_filename = fileName.get()
+
+uid = "UID"                             # Get the UID string title
+ptm = "Team_Member"                     # Get the Preferred Team-mate column title
+
+c1temp = "ProjPref_1"
+c2temp = "ProjPref_2"
+c3temp = "ProjPref_3"
+c4temp = "ProjPref_4"
+c5temp = "ProjPref_5"
+
+data = pd.read_csv(input_filename)
+listvalues = list(data.columns)
+
+
+
+label1a = Label(root, text="Unique Identifier")
+label1a.pack(pady=(10,0))
+label1a.config(justify = CENTER)
+
+uid_field = ttk.Combobox(root,width=50,values=listvalues)
+uid_field.insert(END,uid)
+uid_field.pack(pady=(0,5))
+
+
+label1b = Label(root, text="Preferred Teammates")
+label1b.pack(pady=(10,0))
+label1b.config(justify = CENTER)
+
+ptm_field = ttk.Combobox(root,width=50,values=listvalues)
+ptm_field.insert(END,ptm)
+ptm_field.pack(pady=(0,5))
 
 
 label2 = Label(root, text="Criterion 1")
 label2.pack(pady=(10,0))
 label2.config(justify = CENTER)
 
-c1 = Entry(root, width = 50)
-c1.insert(END,'Project Preference 1')
+#c1 = Entry(root, width = 50)
+c1 = ttk.Combobox(root,width=50,values=listvalues)
+c1.insert(END,c1temp)
 c1.pack(pady=(0,5))
 
 label3 = Label(root, text="Criterion 2")
 label3.pack(pady=(10,0))
 label3.config(justify = CENTER)
 
-c2 = Entry(root, width = 50)
-c2.insert(END,'Project Preference 2')
+#c2 = Entry(root, width = 50)
+c2 = ttk.Combobox(root,width=50,values=listvalues)
+c2.insert(END,c2temp)
 c2.pack(pady=(0,5))
 
 label4 = Label(root, text="Criterion 3")
 label4.pack(pady=(10,0))
 label4.config(justify = CENTER)
 
-c3 = Entry(root, width = 50)
-c3.insert(END,'Project Preference 3')
+#c3 = Entry(root, width = 50)
+c3 = ttk.Combobox(root,width=50,values=listvalues)
+c3.insert(END,c3temp)
 c3.pack(pady=(0,5))
 
 label5 = Label(root, text="Criterion 4")
 label5.pack(pady=(10,0))
 label5.config(justify = CENTER)
 
-c4 = Entry(root, width = 50)
-c4.insert(END,'Project Preference 4')
+#c4 = Entry(root, width = 50)
+c4 = ttk.Combobox(root,width=50,values=listvalues)
+c4.insert(END,c4temp)
 c4.pack(pady=(0,5))
 
 label6 = Label(root, text="Criterion 5")
 label6.pack(pady=(10,0))
 label6.config(justify = CENTER)
 
-c5 = Entry(root, width = 50)
-c5.insert(END,'Project Preference 5')
+#c5 = Entry(root, width = 50)
+c5 = ttk.Combobox(root,width=50,values=listvalues)
+c5.insert(END,c5temp)
 c5.pack(pady=(0,5))
 
 button1 = Button(root, text = 'Submit',bg='#4B8BBE')
@@ -745,12 +807,6 @@ output_file.pack()
 
 
 root.mainloop()
-
-
-# In[ ]:
-
-
-
 
 
 # In[ ]:
