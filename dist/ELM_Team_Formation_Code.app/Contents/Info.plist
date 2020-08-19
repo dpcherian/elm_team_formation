@@ -7,7 +7,7 @@
 	<key>CFBundleExecutable</key>
 	<string>MacOS/ELM_Team_Formation_Code</string>
 	<key>CFBundleIconFile</key>
-	<string>icon.ico</string>
+	<string>icon-windowed.icns</string>
 	<key>CFBundleIdentifier</key>
 	<string>ELM_Team_Formation_Code</string>
 	<key>CFBundleInfoDictionaryVersion</key>
