@@ -4,7 +4,7 @@ block_cipher = None
 
 
 a = Analysis(['ELM_Team_Formation_Code.py'],
-             pathex=['C:\\Users\\IEUser\\Documents\\GitHub\\elm_team_formation'],
+             pathex=['/Users/pc/Documents/GitHub/elm_team_formation'],
              binaries=[],
              datas=[],
              hiddenimports=[],
@@ -30,4 +30,8 @@ exe = EXE(pyz,
           upx=True,
           upx_exclude=[],
           runtime_tmpdir=None,
-          console=True , icon='icon.ico')
+          console=False , icon='icon.ico')
+app = BUNDLE(exe,
+             name='ELM_Team_Formation_Code.app',
+             icon='icon.ico',
+             bundle_identifier=None)
