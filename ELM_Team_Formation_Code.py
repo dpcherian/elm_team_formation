@@ -11,7 +11,7 @@ import time
 import random
 
 import tkinter as tk
-get_ipython().run_line_magic('gui', 'tk')
+#get_ipython().run_line_magic('gui', 'tk')
 
 
 # # Common Functions for All 
