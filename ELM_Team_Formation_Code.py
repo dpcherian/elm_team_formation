@@ -25,27 +25,22 @@ def write_csv(names,groups,group_constraints,input_file, output_file):
     
     
     def calculate_group_happiness(g,gc):
-        
-        s=0
-        
+          
+        s=0                             # Variable to store the "satisfaction"
         nums = np.arange(0,len(g),1)    # Indices for each person in the group
-        
         all_pairs = list(comb(nums,2))  # All pairs of individuals  
         
         for pair in all_pairs:
-            
             pair_score = score(gc[pair[0]],gc[pair[1]])
-            
             s = s + pair_score
         
         return s
     
-    
-    print_satisfaction = 0
+    print_satisfaction = 0               # Should we print the satisfaction? 
     max_poss_happiness = 1
     
     if(len(group_constraints)!=0):
-        print_satisfaction=1
+        print_satisfaction=1             # Don't print in case of indeterminate groups
 
         dummy_group = []
         dummy_group_constraints = []
@@ -96,14 +91,12 @@ def write_csv(names,groups,group_constraints,input_file, output_file):
             
             for person in group:
                 
-                if(person[0:8]!="!phantom"):
+                if(person[0:8]!="!phantom"):                      # Don't print phantoms
                     personCounter = personCounter + 1
                     index = np.where(names==person)[0][0]
 
                     line = data.iloc[[index]].fillna('').values[0]
                     writer.writerow(line)
-#                 else:
-#                     writer.writerow(["THE GHOST WHO WALKS"])
                     
             writer.writerow([])
 
@@ -165,15 +158,18 @@ def pair_groupmates(names,preferred_groupmate,constraints):
     # 1) All members are paired with one and only one other member
     # 2) Pairs are unique (A-->C => C-->A)
     # 3) All pair members have exactly the same preferences (constraints)
-    
+
+### TEST ARRAYS FOR DEBUGGING #################################
+#
 #     names               = np.array(["A","B","C","D","E","F"])
 #     preferred_groupmate = np.array(["", "E", "D","C" ,"B",""])
 #     d1 = [1,2,3,3,2,0]
 #     d2 = [6,7,8,8,7,10]
-#     d3 = [11,12,13,13,12,20]
-    
+#     d3 = [11,12,13,13,12,20]   
 #     constraints         =  np.array([d1,d2,d3])
 #     print(constraints)
+###############################################################
+
     groups = []
     group_constraints = []
     new_names=[]
@@ -230,7 +226,7 @@ def pair_remaining(names,constraints,groups,group_constraints):
     while(len(names)>0):
     
         N = len(names)
-        #print(N)
+        
         pair_rating = np.zeros((N,N),int)
 
 
@@ -238,8 +234,7 @@ def pair_remaining(names,constraints,groups,group_constraints):
 
         for i in range(0,N):
             for j in range(i+1,N):
-
-                #print(constraints[i,:],constraints[j,:])
+                
                 s = score(constraints[i,:],constraints[j,:])
 
                 pair_rating[i,j]=s
@@ -363,7 +358,6 @@ def groups_pairs(groups,group_constraints):
         ## Finding the best match among all pairs of pairs provided by the groups array
 
         all_quartets = list(comb(groups.tolist(),2))    # List of all pairs of pairs of students
-        #print(all_quartets[0])
 
         happiness_array = []               # Array to store the happiness of each quartet
 
@@ -405,8 +399,6 @@ def groups_pairs(groups,group_constraints):
             for person in pairs[1]:
                 sample.append(person)             # Append to this copy all people in second pair.
                                                   # The variable sample now has a full quartet
-
-            #print(sample)
 
             sample_constraints = []               # Array to store constraints of quartet
 
@@ -457,14 +449,9 @@ def create_indeterminate_groups(new_names, new_d1, new_d2, new_d3, new_d4, new_d
     
     happiness_array=np.array(happiness_array)
     
-    #print("happiness checked " + str(np.sum(happiness_array)))
-    
-    #print(happiness_array)
-    
     max_val = max(happiness_array)
-    #print("Max happiness is" + str(max_val))
+    
     pair_nums = np.where(happiness_array==max_val)[0]
-    #print(pair_nums)
     
     #### COULD BE BETTER -- Right now choosing randomly
     
@@ -473,7 +460,7 @@ def create_indeterminate_groups(new_names, new_d1, new_d2, new_d3, new_d4, new_d
     for pair in pair_nums:
         people = class_pairs[pair]
         sample = np.array([people[0],people[1]])
-        #print(sample)
+        
         pref1 = []
         pref2 = []
         pref3 = []
@@ -523,9 +510,12 @@ def create_indeterminate_groups(new_names, new_d1, new_d2, new_d3, new_d4, new_d
 
 def run_groups_of_four(names,preferred_groupmate,constraints,input_filename, output_filename):
     
+    print("******** CREATING GROUPS OF FOUR ********")
+    print()
+    
     # Make groups out of the team member preferences
     new_names, new_constraints, groups, group_constraints = pair_groupmates(names,preferred_groupmate,constraints)
-
+    
     # Assign the remaining students to groups based on constraints (project preferences etc.)
     groups, group_constraints = pair_remaining(new_names,new_constraints,groups,group_constraints)
 
@@ -538,6 +528,9 @@ def run_groups_of_four(names,preferred_groupmate,constraints,input_filename, out
 
 def run_groups_of_two(names,preferred_groupmate,constraints,input_filename,output_filename):
     
+    print("******** CREATING GROUPS OF TWO ********")
+    print()
+    
     # Make groups out of the team member preferences
     new_names, new_constraints, groups, group_constraints = pair_groupmates(names,preferred_groupmate,constraints)
     
@@ -549,6 +542,9 @@ def run_groups_of_two(names,preferred_groupmate,constraints,input_filename,outpu
     
 
 def run_indeterminate_groups(names,preferred_groupmate,constraints,max_groups,input_filename,output_filename):
+    
+    print("******** CREATING GROUPS OF INDETERMINATE SIZES ********")
+    print()
     
     ## This part of the code assumes both preferred teammates have same preferences.
     
@@ -661,6 +657,9 @@ import traceback
 from tkinter import ttk
 from tkinter import filedialog 
 
+from dadjokes import Dadjoke
+
+
 versionNumber = "1.0"
 
 def browseFiles(): 
@@ -680,10 +679,33 @@ def get_input():
     
     try:
         
-        input_filename = fileName.get()                # Get the name of the input file
+        processingWindow = Toplevel()
         
-        #uid = "First Name"                             # Get the UID string title
-        #ptm = "Preferred Team Member (Paired)"         # Get the Preferred Team-mate column title
+        processingWindow.title("Don't rush me!")
+        
+        Label(processingWindow, 
+        text="While I'm working, here's something you might appreciate:", width = 50,
+        justify = CENTER,
+        padx = 20).pack(pady=10)
+        
+        
+        try:
+            joke = Dadjoke().joke
+        except:
+            joke = "Why do birds fly south in winter?\n\n Because it's too far to walk."
+        
+        Label(processingWindow, 
+        text=joke, width = 50,
+        justify = CENTER, wraplength=300, fg='saddle brown',
+        padx = 20).pack(pady=10)
+        
+#         progress=ttk.Progressbar(processingWindow,orient=HORIZONTAL,length=50,mode='indeterminate')
+#         progress.pack()
+#         progress.start()
+        
+        processingWindow.update()
+        
+        input_filename = fileName.get()                # Get the name of the input file
         
         data = pd.read_csv(input_filename)
         names = data[uid_field.get()].values
@@ -709,7 +731,8 @@ def get_input():
         ## We add enough"phantom" students to do this.  #####
         ##                                              #####
         #####################################################
-        
+        print()
+        print("###### STARTING GROUP CREATION #####")
         print("Total number of students: "+str(len(names)))
         
         phantomNo = 1      # A counter for the number of phantom students added.
@@ -752,7 +775,13 @@ def get_input():
         
     except Exception as e:
         messagebox.showerror("Oh No!",e,detail=traceback.format_exc())
-    root.destroy()
+    
+    processingWindow.destroy()
+    
+    result = messagebox.askyesno("It's done.", "Finally!", detail="Do you want to close the tool?")
+    
+    if result == True:
+        root.destroy()
     
     
     
@@ -855,8 +884,10 @@ def updateLists(filename):
 
 input_filename = fileName.get()
 
-uid = "UID"                             # Get the UID string title
-ptm = "Team_Member"                     # Get the Preferred Team-mate column title
+# FILLER STRINGS (for dropdown boxes)
+
+uid = "UID"             # Get the UID string title
+ptm = "Team_Member"     # Get the Preferred Team-mate column title
 
 c1temp = "ProjPref_1"
 c2temp = "ProjPref_2"
@@ -864,8 +895,7 @@ c3temp = "ProjPref_3"
 c4temp = "ProjPref_4"
 c5temp = "ProjPref_5"
 
-# data = pd.read_csv(input_filename)
-# listvalues = list(data.columns)
+#######################################
 
 listvalues = []
 
@@ -892,7 +922,6 @@ label2 = Label(root, text="Criterion 1")
 label2.pack(pady=(10,0))
 label2.config(justify = CENTER)
 
-#c1 = Entry(root, width = 50)
 c1 = ttk.Combobox(root,width=50,values=listvalues)
 c1.insert(END,c1temp)
 c1.pack(pady=(0,5))
@@ -901,7 +930,6 @@ label3 = Label(root, text="Criterion 2")
 label3.pack(pady=(10,0))
 label3.config(justify = CENTER)
 
-#c2 = Entry(root, width = 50)
 c2 = ttk.Combobox(root,width=50,values=listvalues)
 c2.insert(END,c2temp)
 c2.pack(pady=(0,5))
@@ -910,7 +938,6 @@ label4 = Label(root, text="Criterion 3")
 label4.pack(pady=(10,0))
 label4.config(justify = CENTER)
 
-#c3 = Entry(root, width = 50)
 c3 = ttk.Combobox(root,width=50,values=listvalues)
 c3.insert(END,c3temp)
 c3.pack(pady=(0,5))
@@ -919,7 +946,6 @@ label5 = Label(root, text="Criterion 4")
 label5.pack(pady=(10,0))
 label5.config(justify = CENTER)
 
-#c4 = Entry(root, width = 50)
 c4 = ttk.Combobox(root,width=50,values=listvalues)
 c4.insert(END,c4temp)
 c4.pack(pady=(0,5))
@@ -928,7 +954,6 @@ label6 = Label(root, text="Criterion 5")
 label6.pack(pady=(10,0))
 label6.config(justify = CENTER)
 
-#c5 = Entry(root, width = 50)
 c5 = ttk.Combobox(root,width=50,values=listvalues)
 c5.insert(END,c5temp)
 c5.pack(pady=(0,5))
@@ -946,9 +971,13 @@ output_file.insert(END,'groups')
 output_file.pack()
 
 
-
-
 root.mainloop()
+
+
+# In[ ]:
+
+
+
 
 
 # In[ ]:
