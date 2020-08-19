@@ -1,3 +1,0 @@
-([('ELM_Team_Formation_Code',
-   '/Users/pc/Documents/GitHub/elm_team_formation/dist/ELM_Team_Formation_Code',
-   'EXECUTABLE')],)
