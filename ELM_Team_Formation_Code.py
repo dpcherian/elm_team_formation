@@ -11,7 +11,7 @@ import time
 import random
 
 import tkinter as tk
-#get_ipython().run_line_magic('gui', 'tk')
+get_ipython().run_line_magic('gui', 'tk')
 
 
 # # Common Functions for All 
@@ -19,52 +19,101 @@ import tkinter as tk
 # In[2]:
 
 
-def write_csv(names,groups,input_file, output_file):
+def write_csv(names,groups,group_constraints,input_file, output_file):
     import csv
     import datetime
     
-    print("Creating output CSV.")
-    data = pd.read_csv(input_file)
-    #data = pd.read_csv("Biased_Data.csv")
-    #names = data["First Name"].values
-    #preferred_groupmate = data["Preferred Team Member (Paired)"].fillna('').values        
-
-#     d1 = data["Project Preference 1"].values
-#     d2 = data["Project Preference 2"].values
-#     d3 = data["Project Preference 3"].values
-
-#     d4 = data["Project Preference 4"].values
-#     d5 = data["Project Preference 5"].values
     
+    def calculate_group_happiness(g,gc):
+        
+        s=0
+        
+        nums = np.arange(0,len(g),1)    # Indices for each person in the group
+        
+        all_pairs = list(comb(nums,2))  # All pairs of individuals  
+        
+        for pair in all_pairs:
+            
+            pair_score = score(gc[pair[0]],gc[pair[1]])
+            
+            s = s + pair_score
+        
+        return s
+    
+    
+    print_satisfaction = 0
+    max_poss_happiness = 1
+    
+    if(len(group_constraints)!=0):
+        print_satisfaction=1
+
+        dummy_group = []
+        dummy_group_constraints = []
+
+        for i in range(0,len(group_constraints[0])):
+            dummy_prefs = []
+            dummy_group.append("person"+str(i+1))
+
+            for j in range(0,len(group_constraints[0][0])):
+                dummy_prefs.append("dummy"+str(j+1))
+
+            dummy_group_constraints.append(dummy_prefs)
+
+        dummy_group_constraints=np.array(dummy_group_constraints)
+        max_poss_happiness=calculate_group_happiness(dummy_group,dummy_group_constraints)
+
+    print()
+    print("Maximum possible happiness is: "+str(max_poss_happiness))
+    print("Creating output CSV.")
+    print("Groups written to file: ",end=" ")
+    
+    data = pd.read_csv(input_file)
     
     
     date = datetime.datetime.now()
-
     dateString = date.strftime("-%Y-%b-%d_%H-%M-%S")
-    
     fileName = output_file+dateString+".csv"
   
-    counter = 0 
+    counter = 0
+    personCounter = 0
 
     with open(fileName, 'w', newline='') as file:
         writer = csv.writer(file)
         writer.writerow(data.columns.values)  # Write the first line with column headers
         
         
-        for group in groups:
-            writer.writerow(["Group "+str(counter+1)])
-
+        for i in range(0,len(groups)):
+            group = groups[i]
+            
+            if(print_satisfaction>0):
+                group_happiness = calculate_group_happiness(groups[i],group_constraints[i])
+                satisfaction = str(np.round(100.0*(group_happiness/max_poss_happiness),2))+"%" # This the "percentage" of happiness
+            else:
+                satisfaction = "Not defined"
+            
+            
+            writer.writerow(["Group "+str(counter+1),"","Satisfaction: "+satisfaction])
+            
             for person in group:
-                index = np.where(names==person)[0][0]
+                
+                if(person[0:8]!="!phantom"):
+                    personCounter = personCounter + 1
+                    index = np.where(names==person)[0][0]
 
-                line = data.iloc[[index]].fillna('').values[0]
-                writer.writerow(line)
+                    line = data.iloc[[index]].fillna('').values[0]
+                    writer.writerow(line)
+#                 else:
+#                     writer.writerow(["THE GHOST WHO WALKS"])
+                    
             writer.writerow([])
 
             counter = counter + 1
-            print(counter)
+            print(counter,end=" ")
     
+    print()
     print("Done creating CSV.")
+    print()
+    print("Total students processed: "+str(personCounter))
             
 
 def score(list1,list2):                        # accept 2 lists to compare
@@ -109,6 +158,8 @@ def happiness(group,names,pair_rating):  # group is a "group" [name1, name2]
 
 
 def pair_groupmates(names,preferred_groupmate,constraints):
+    
+    print("Begin pairing preferred teammates.")
     
     # Assumptions in this function:
     # 1) All members are paired with one and only one other member
@@ -159,6 +210,9 @@ def pair_groupmates(names,preferred_groupmate,constraints):
         # The new_constraints here is a little odd, while in this function we use constraints[:,index] to
         # get a person's preferences, if you wanted to do the same thing with new_constraints, you need to use
         # new_constraints[index,:]. I'd try to fix it, but it doesn't really matter and I can't be too bothered.
+    
+    print("Done pairing preferred teammates.")
+    
     return new_names, new_constraints, groups, group_constraints
 
 
@@ -166,6 +220,10 @@ def pair_groupmates(names,preferred_groupmate,constraints):
 
 
 def pair_remaining(names,constraints,groups,group_constraints):
+    
+    print("Begin pairing remaining students.")
+    print("Students remaining:",end=" ")
+    
     names = np.array(names)
     constraints = np.array(constraints) # Check final comment in pair_groupmates regarding how this is indexed.
     
@@ -238,8 +296,9 @@ def pair_remaining(names,constraints,groups,group_constraints):
             groups.append(sample)
             group_constraints.append(sample_constraints)
 
-            print(len(names))
-        
+            print(len(names),end=" ")
+    print()
+    print("Done pairing remaining students.")
     return groups, group_constraints
 
 
@@ -247,6 +306,9 @@ def pair_remaining(names,constraints,groups,group_constraints):
 
 
 def groups_pairs(groups,group_constraints):
+    
+    print("Begin creating quartets.")
+    print("Pairs remaining:",end=" ")
     
     groups, group_constraints = np.array(groups), np.array(group_constraints)
     
@@ -359,8 +421,11 @@ def groups_pairs(groups,group_constraints):
             final_quartets.append(sample)
             final_quartet_constraints.append(sample_constraints)
 
-            print(len(groups))
-            
+            print(len(groups),end=" ")
+    
+    print()
+    print("Done creating quartets.")
+    
     return final_quartets, final_quartet_constraints
 
 
@@ -447,9 +512,11 @@ def create_indeterminate_groups(new_names, new_d1, new_d2, new_d3, new_d4, new_d
         new_d4 = np.append(new_d4,random.choice(pref4))
         new_d5 = np.append(new_d5,random.choice(pref5))
     
-    print(len(new_names))
+    print(len(new_names),end=" ")
     return new_names,new_d1,new_d2,new_d3,new_d4,new_d5,max_val
 
+
+# # Functions called directly by GUI
 
 # In[7]:
 
@@ -466,7 +533,7 @@ def run_groups_of_four(names,preferred_groupmate,constraints,input_filename, out
     quartets, quartet_constraints = groups_pairs(groups,group_constraints)
 
     # Write resulting groups to a .csv file
-    write_csv(names, quartets, input_filename, output_filename)
+    write_csv(names, quartets, quartet_constraints, input_filename, output_filename)
 
 
 def run_groups_of_two(names,preferred_groupmate,constraints,input_filename,output_filename):
@@ -478,7 +545,7 @@ def run_groups_of_two(names,preferred_groupmate,constraints,input_filename,outpu
     groups, group_constraints = pair_remaining(new_names,new_constraints,groups,group_constraints)
 
     # Write resulting groups to a .csv file
-    write_csv(names, groups, input_filename, output_filename)
+    write_csv(names, groups, group_constraints, input_filename, output_filename)
     
 
 def run_indeterminate_groups(names,preferred_groupmate,constraints,max_groups,input_filename,output_filename):
@@ -488,7 +555,7 @@ def run_indeterminate_groups(names,preferred_groupmate,constraints,max_groups,in
     # Make groups out of the team member preferences
     new_names, new_constraints, paired_teammates, paired_constraints = pair_groupmates(names,preferred_groupmate,constraints)
     
-    print(len(new_names))
+    print(len(new_names),end=" ")
     
     for i in range(0,len(paired_teammates)):
         
@@ -503,7 +570,6 @@ def run_indeterminate_groups(names,preferred_groupmate,constraints,max_groups,in
         
         new_constraints.append(paired_constraints[i][0])   # Assuming both teammates have same preferences, so
                                                            # only appending the preferences of the first 
-        print(len(new_names))
         
     
     new_names = np.array(new_names)
@@ -516,11 +582,12 @@ def run_indeterminate_groups(names,preferred_groupmate,constraints,max_groups,in
     new_d4 = new_constraints[:,3].copy()
     new_d5 = new_constraints[:,4].copy()
     
-    print("Starting pairing")
+    print("Starting pairing.")
+    print("Groups remaining: ",end=" ")
     
     while(len(new_names)>max_groups):
         new_names, new_d1, new_d2, new_d3, new_d4, new_d5, val = create_indeterminate_groups(new_names,new_d1,new_d2,new_d3,new_d4,new_d5)
-    
+        print(len(new_names),end=" ")
     print("Done pairing.")
     
     groups = []
@@ -529,10 +596,63 @@ def run_indeterminate_groups(names,preferred_groupmate,constraints,max_groups,in
         members = group.split("-")
         groups.append(members)
     
-    write_csv(names,groups,input_filename,output_filename)
+    group_constraints = np.array([]) # As of right now, we can't measure a score for indeterminate groups.
+    
+    write_csv(names,groups,group_constraints,input_filename,output_filename)
 
+
+# # Adding Phantom Students
 
 # In[8]:
+
+
+## Adding Phantom Students to make the numbers divisible by 4
+
+def add_one_phantom(names,preferred_groupmate,constraints,phantomNo):
+    names = np.append(names,"!phantom"+str(phantomNo))
+    preferred_groupmate = np.append(preferred_groupmate,"")
+    
+    dummy_constraint = []
+    
+    for i in range(0,len(constraints)):
+        dummy_constraint.append("!pcriterion"+str(i+1))
+        
+    constraints = np.c_[constraints,dummy_constraint]
+    
+    phantomNo = phantomNo + 1
+    
+    return names,preferred_groupmate,constraints,phantomNo
+    
+def add_two_phantom(names,preferred_groupmate,constraints,phantomNo):
+    
+    # Add First Person
+    
+    names = np.append(names,"!phantom"+str(phantomNo))
+    preferred_groupmate = np.append(preferred_groupmate,"!phantom"+str(phantomNo+1))
+    
+    # Add Second Person 
+    
+    names = np.append(names,"!phantom"+str(phantomNo+1))
+    preferred_groupmate = np.append(preferred_groupmate,"!phantom"+str(phantomNo))
+    
+    # Dummy constraints for both (they have the same), so appended twice
+    
+    dummy_constraint = []
+    
+    for i in range(0,len(constraints)):
+        dummy_constraint.append("!pcriterion"+str(i+1))
+        
+    constraints = np.c_[constraints,dummy_constraint]
+    constraints = np.c_[constraints,dummy_constraint]
+    
+    phantomNo = phantomNo + 2
+    
+    return names,preferred_groupmate,constraints,phantomNo
+
+
+# # The GUI (Main)
+
+# In[9]:
 
 
 from tkinter import *
@@ -540,6 +660,8 @@ import tkinter.messagebox as messagebox
 import traceback
 from tkinter import ttk
 from tkinter import filedialog 
+
+versionNumber = "1.0"
 
 def browseFiles(): 
     filename = filedialog.askopenfilename(initialdir = "./", 
@@ -577,29 +699,46 @@ def get_input():
         
         constraints = np.array(constraints)
         
+        #####################################################
+        ##                                              #####
+        ## Dealing with odd numbers of people or groups #####
+        ## As of now the code creates either groups of  #####
+        ## two or four, and so we need to make sure the #####
+        ## arrays above are multiples of 4. This is not #####
+        ## essential for the indeterminate sized groups.#####
+        ## We add enough"phantom" students to do this.  #####
+        ##                                              #####
+        #####################################################
         
-#         d1 = data["Project Preference 1"].values
-#         d2 = data["Project Preference 2"].values
-#         d3 = data["Project Preference 3"].values
-
-#         d4 = data["Project Preference 4"].values
-#         d5 = data["Project Preference 5"].values
+        print("Total number of students: "+str(len(names)))
         
+        phantomNo = 1      # A counter for the number of phantom students added.
+        
+        if(len(names)%4==3):
+            names,preferred_groupmate,constraints,phantomNo = add_one_phantom(names,preferred_groupmate,constraints,phantomNo)
+        elif(len(names)%4==2):
+            names,preferred_groupmate,constraints,phantomNo = add_two_phantom(names,preferred_groupmate,constraints,phantomNo)
+        elif(len(names)%4==1):
+            names,preferred_groupmate,constraints,phantomNo = add_one_phantom(names,preferred_groupmate,constraints,phantomNo)
+            names,preferred_groupmate,constraints,phantomNo = add_two_phantom(names,preferred_groupmate,constraints,phantomNo)
+        
+        print("Number of phantoms added: "+ str(phantomNo-1) + " (Yay!)")
+        print()
         
         button = v.get()
         
         max_groups = int(max_groups_entry.get())
         
         output_filename = output_file.get()
-
+        
         if button == 1:
             if(len(names)%4!=0):
-                messagebox.showerror("Work in progress!","Currently this only works when total number of students is a multiple of 4. Edit your input file.",detail="Hopefully should be done in a couple of days.")
+                messagebox.showerror("What on Earth!","It seems that the number of students isn't a multiple of four.",detail="This error certainly shoudn't occur. Call Philip up and complain at once!")
             else:
                 run_groups_of_four(names,preferred_groupmate,constraints,input_filename,output_filename)
         elif button == 2:
             if(len(names)%2!=0):
-                messagebox.showerror("Work in progress!","Currently this only works when total number of students is an even number. Edit your input file.",detail="Hopefully should be done in a couple of days.")
+                messagebox.showerror("What on Earth!","It seems that the number of students isn't a multiple of two.",detail="This error certainly shoudn't occur. Call Philip up and complain at once!")
             else:
                 run_groups_of_two(names,preferred_groupmate,constraints,input_filename,output_filename)
         elif button == 3:
@@ -628,7 +767,7 @@ def get_input():
 
 root = Tk()
 
-root.title("ELM Team Formation Tool")
+root.title("ELM Team Formation Tool (v "+versionNumber+")")
 
 f1 = Frame(root, relief=GROOVE, width=50,height=50,borderwidth=0)
 f1.pack()
@@ -693,24 +832,26 @@ max_groups_entry.pack(anchor=W,side=RIGHT,padx=10)
 
 ###################################################################
 
-def updateLists(filename):
-    
-    data = pd.read_csv(filename)
-    listvalues = list(data.columns)
-
-    uid_field['values'] = listvalues
-    ptm_field['values'] = listvalues
-    c1['values'] = listvalues
-    c2['values'] = listvalues
-    c3['values'] = listvalues
-    c4['values'] = listvalues
-    c5['values'] = listvalues
 
 ## Make sure the right dropbox menus show #########
 
-        
+def updateLists(filename):
+    
+    if(len(filename)!=0):
+    
+        data = pd.read_csv(filename)
+        listvalues = list(data.columns)
+
+        uid_field['values'] = listvalues
+        ptm_field['values'] = listvalues
+        c1['values'] = listvalues
+        c2['values'] = listvalues
+        c3['values'] = listvalues
+        c4['values'] = listvalues
+        c5['values'] = listvalues        
 
 ###################################################
+
 
 input_filename = fileName.get()
 
@@ -723,9 +864,10 @@ c3temp = "ProjPref_3"
 c4temp = "ProjPref_4"
 c5temp = "ProjPref_5"
 
-data = pd.read_csv(input_filename)
-listvalues = list(data.columns)
+# data = pd.read_csv(input_filename)
+# listvalues = list(data.columns)
 
+listvalues = []
 
 
 label1a = Label(root, text="Unique Identifier")
