@@ -10,8 +10,8 @@ The code works on data provided in a CSV file, a sample template is the file *Bi
 
 2. **A "preferred team-mate" column:** Each students is given the option to opt for *one* preferred team-mate, however the assumption is that their preferred team-mate has opted for them as well. If this is not satisfied, **the code will still run, but preferred teams are not guaranteed for everyone**. Two additional important points *must* be checked for manually before the code is run:
 
-  * **The preferred team-mate should be indexed by the *same* identifier as the unique identifier mentioned before**. (i.e. don't use, say, the student's email address to be the UID, but have the preferred team-mate to be populated by full-names, for example.) 
-  * Also, each pair of teammates will be assumed to have exactly the same preferences. 
+     * **The preferred team-mate should be indexed by the *same* identifier as the unique identifier mentioned before**. (i.e. don't use, say, the student's email address to be the UID, but have the preferred team-mate to be populated by full-names, for example.) 
+     * Also, each pair of teammates will be assumed to have exactly the same preferences. 
   
 3. **Up to five preferences by which the teams can be formed:** These could be project preferences, domain choices, etc. They will be given weightages according to their order, so make sure they are entered in the right order on the GUI.
 
