@@ -74,7 +74,7 @@ def write_csv(names,groups,group_constraints,input_file, output_file):
 
     with open(fileName, 'w', newline='') as file:
         writer = csv.writer(file)
-        writer.writerow(data.columns.values)  # Write the first line with column headers
+        writer.writerow(np.append(["Group Number","Satisfaction"],data.columns.values))  # Write the first line with column headers
         
         
         for i in range(0,len(groups)):
@@ -87,7 +87,7 @@ def write_csv(names,groups,group_constraints,input_file, output_file):
                 satisfaction = "Not defined"
             
             
-            writer.writerow(["Group "+str(counter+1),"","Satisfaction: "+satisfaction])
+            #writer.writerow(["Group "+str(counter+1),"","Satisfaction: "+satisfaction])
             
             for person in group:
                 
@@ -96,7 +96,7 @@ def write_csv(names,groups,group_constraints,input_file, output_file):
                     index = np.where(names==person)[0][0]
 
                     line = data.iloc[[index]].fillna('').values[0]
-                    writer.writerow(line)
+                    writer.writerow(np.append([str(counter+1),satisfaction],line))
                     
             writer.writerow([])
 
@@ -503,9 +503,97 @@ def create_indeterminate_groups(new_names, new_d1, new_d2, new_d3, new_d4, new_d
     return new_names,new_d1,new_d2,new_d3,new_d4,new_d5,max_val
 
 
-# # Functions called directly by GUI
+# # Code for Groups of Four (BETA)
 
 # In[7]:
+
+
+def beta_all_possible_quartets(names,constraints):
+    
+#     names = np.append(names,["G","H","I","J"])
+#     constraints = np.append(constraints,[[1,2,3]],axis=0)
+#     constraints = np.append(constraints,[[1,2,3]],axis=0)
+#     constraints = np.append(constraints,[[1,2,3]],axis=0)
+#     constraints = np.append(constraints,[[1,2,3]],axis=0)
+    
+    groups = []
+    
+    constraints = np.array(constraints)
+    
+    print("Groups of 4+ created ",end=" ")
+    
+    while(len(names)>0):
+        
+        N = len(names)
+        print("N"+str(N),end=" ")
+
+        quartet_rating = np.zeros((N,N),int)
+    
+
+        ## Create pair_ratings based on the provided names array
+
+        for i in range(0,N):
+            for j in range(i+1,N):
+
+                s = score(constraints[i],constraints[j])
+
+                quartet_rating[i,j]=s
+                quartet_rating[j,i]=s 
+
+        all_quartets = list(comb(names,4))
+        
+        happiness_array = []
+
+        for i in range(0, len(all_quartets)):
+            happiness_array.append(happiness(all_quartets[i],names,quartet_rating))
+
+        happiness_array=np.array(happiness_array)  # Convert it to a numpy array
+
+        max_val = max(happiness_array)             # Find maximum value of the happiness array. 
+
+        quartet_nums = np.where(happiness_array==max_val)[0] # Find quartets that have this max_val. Returns an array 
+                                                                 # since there may be more than one result. The array
+                                                                 # contains integers that represent the position of the pair
+                                                                 # in the happiness_array / all_quartet lists.
+
+        #### COULD BE BETTER -- Right now choosing randomly
+
+        # Since there could be many quartets that have the same "largest" value of happiness, and since 
+        # the same pair(s) may be present in multiple quartets, we have a slight problem. To circumvent this, I
+        # have decided to choose a quartet at random. However, I continue to use quartet_nums as if it were an array of pairs
+        # so that if I want to improve on this later, I don't need to change the code.
+
+        # Ideally, I'd like to remove all cases where the same pair exists in more than one quartet (by, say, choosing
+        # one of *those* quartets randomly), and then pair up all the rest. But frankly, now that I think about it, I
+        # don't think it'd really be very different from what I'm doing now.
+
+        quartet_nums = [random.choice(quartet_nums)] 
+        
+
+        for quartet_num in quartet_nums: # Get a group of four
+
+            quartet = all_quartets[quartet_num] # Get the list of students in quartet
+            
+            for person in quartet:
+                index = np.where(names==person)[0][0]
+                names = np.delete(names,index)
+                constraints = np.delete(constraints,index,axis=0)
+            
+            groups.append(list(quartet))
+
+        print(len(groups),end=" ")
+    
+    print()
+    print("Done creating quartets.")
+    
+    group_constraints = np.array([])
+    
+    return groups,group_constraints
+
+
+# # Functions called directly by GUI
+
+# In[8]:
 
 
 def run_groups_of_four(names,preferred_groupmate,constraints,input_filename, output_filename):
@@ -596,10 +684,85 @@ def run_indeterminate_groups(names,preferred_groupmate,constraints,max_groups,in
     
     write_csv(names,groups,group_constraints,input_filename,output_filename)
 
+    
+def run_beta_groups_of_four(names,preferred_groupmate,constraints,input_filename,output_filename):
+    
+    print("******** CREATING GROUPS OF FOUR (BETA) ********")
+    print()
+    
+    names_copy = names.copy()
+    
+    # Make groups out of the team member preferences
+    new_names, new_constraints, groups, group_constraints = pair_groupmates(names,preferred_groupmate,constraints)
+    
+    ## Add paired teammates as new individuals ##
+    
+    temp_name_array = []
+    
+    for group in groups:
+        temp_name = ""
+        for person in group:
+            temp_name = temp_name + person + "-" 
+        temp_name=temp_name[:-1]
+        temp_name_array.append(temp_name)
+        
+    new_names = np.append(new_names,temp_name_array)
+    #print(new_constraints)
+    print(len(new_names))
+    ## Add paired constraints to the list
+    
+    
+    for group_constraint in group_constraints:
+        new_constraints.append(group_constraint[0])
+    
+    #### DELETE THIS SECTION ONCE IT'S IMPROVED ####
+    
+    phantomNo = 1
+    
+    if(len(new_names)%4==3):
+        new_names,preferred_groupmate,new_constraints,phantomNo = add_one_phantom(new_names,preferred_groupmate,new_constraints,phantomNo)
+    if(len(new_names)%4==2):
+        new_names,preferred_groupmate,temp_constraints,phantomNo = add_one_phantom(new_names,preferred_groupmate,new_constraints,phantomNo)
+        new_names,preferred_groupmate,temp_constraints,phantomNo = add_one_phantom(new_names,preferred_groupmate,new_constraints,phantomNo)
+       
+        new_constraints = np.append(new_constraints,[[0,0,0,0,0]],axis=0)
+        new_constraints = np.append(new_constraints,[[0,0,0,0,0]],axis=0)
+        #print(new_constraints)
+        
+    if(len(new_names)%4==1):
+        new_names,preferred_groupmate,new_constraints,phantomNo = add_one_phantom(new_names,preferred_groupmate,new_constraints,phantomNo)
+        new_names,preferred_groupmate,new_constraints,phantomNo = add_one_phantom(new_names,preferred_groupmate,new_constraints,phantomNo)
+        new_names,preferred_groupmate,new_constraints,phantomNo = add_one_phantom(new_names,preferred_groupmate,new_constraints,phantomNo)
+    
+    print("New length of thing "+str(len(new_names)))
+    print("New length of const "+str(len(new_constraints)))
+    ################################################
+    
+    
+    
+    # Calculate quartets
+    quartets, quartet_constraints = beta_all_possible_quartets(new_names,new_constraints)
+    
+    new_groups=[]
+    
+    for quartet in quartets:
+        sample_group = []
+        for person in quartet:
+            
+            members = person.split("-")
+            
+            for member in members:
+                sample_group.append(member)
+        new_groups.append(sample_group)
+    
+    print("Length of new groups "+str(len(new_groups)))
+    # Write resulting groups to a .csv file
+    write_csv(names_copy, new_groups, quartet_constraints, input_filename, output_filename)
+
 
 # # Adding Phantom Students
 
-# In[8]:
+# In[9]:
 
 
 ## Adding Phantom Students to make the numbers divisible by 4
@@ -648,7 +811,7 @@ def add_two_phantom(names,preferred_groupmate,constraints,phantomNo):
 
 # # The GUI (Main)
 
-# In[9]:
+# In[10]:
 
 
 from tkinter import *
@@ -659,8 +822,9 @@ from tkinter import filedialog
 
 from dadjokes import Dadjoke
 
+import time
 
-versionNumber = "1.0"
+versionNumber = "1.1"
 
 def browseFiles(): 
     filename = filedialog.askopenfilename(initialdir = "./", 
@@ -765,7 +929,10 @@ def get_input():
             else:
                 run_groups_of_two(names,preferred_groupmate,constraints,input_filename,output_filename)
         elif button == 3:
-            #run_beta_groups_of_four()
+            start = time.time()
+            run_beta_groups_of_four(names, preferred_groupmate,constraints,input_filename,output_filename)
+            end = time.time()
+            print("TOTAL TIME ELAPSED IS: "+str(end-start))
             messagebox.showerror("Work in progress!","I'm working on how to do this.",detail="Hopefully should be done in a couple of days.")
         elif button == 4:
             if(len(constraints)!=5):
@@ -972,16 +1139,4 @@ output_file.pack()
 
 
 root.mainloop()
-
-
-# In[ ]:
-
-
-
-
-
-# In[ ]:
-
-
-
 
