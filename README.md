@@ -53,7 +53,7 @@ The code works on data provided by a CSV file, a sample template is the file *Fi
 
 The output file (CSV) will be created in the same folder from which the code is run. The GUI allows for the name of the output to be changed, but every output file will have the current date and time appended to this name, in order to avoid overwrites. (For example, if you choose to name the output file "groups", the actual name of the output will be *groups-2020-Aug-09_11-23-17.csv*.)
 
-The output reorders the lines from the input file, adding a single extra line per group, indicating the group number and a "satisfaction" percentage per group. (Currently, the satisfaction percentage does not work for groups of indeterminate sizes.) More details on how this percentage is calculated may be found in the section describing the algorithm.
+The output reorders the lines from the input file, adding two new columns at the start, indicating the group number and a "satisfaction" percentage per group. (Currently, the satisfaction percentage does not work for groups of indeterminate sizes or the beta version of the groups of four.) More details on how this percentage is calculated may be found in the section describing the algorithm.
 
 
 
