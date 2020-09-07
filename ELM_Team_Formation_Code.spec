@@ -4,7 +4,7 @@ block_cipher = None
 
 
 a = Analysis(['ELM_Team_Formation_Code.py'],
-             pathex=['/Users/pc/Documents/GitHub/elm_team_formation'],
+             pathex=['C:\\Users\\IEUser\\Documents\\GitHub\\elm_team_formation'],
              binaries=[],
              datas=[],
              hiddenimports=[],
@@ -19,23 +19,15 @@ pyz = PYZ(a.pure, a.zipped_data,
              cipher=block_cipher)
 exe = EXE(pyz,
           a.scripts,
+          a.binaries,
+          a.zipfiles,
+          a.datas,
           [],
-          exclude_binaries=True,
           name='ELM_Team_Formation_Code',
           debug=False,
           bootloader_ignore_signals=False,
           strip=False,
           upx=True,
-          console=False )
-coll = COLLECT(exe,
-               a.binaries,
-               a.zipfiles,
-               a.datas,
-               strip=False,
-               upx=True,
-               upx_exclude=[],
-               name='ELM_Team_Formation_Code')
-app = BUNDLE(coll,
-             name='ELM_Team_Formation_Code.app',
-             icon=None,
-             bundle_identifier=None)
+          upx_exclude=[],
+          runtime_tmpdir=None,
+          console=True , icon='icon.ico')
